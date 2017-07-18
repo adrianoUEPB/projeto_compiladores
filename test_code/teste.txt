@@ -1,0 +1,4 @@
+Inteiro var:
+Inteiro teste:
+Flutuante ab:
+:

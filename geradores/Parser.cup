@@ -1,0 +1,172 @@
+package analise;
+
+import java_cup.runtime.*;
+import java.util.*;
+import java.io.*;
+
+
+action code {:
+	Map<String,Integer> ts = new HashMap<String,Integer>();
+	Deque<Integer> pTipos = new LinkedList<Integer>();
+	
+	public void asVarCheck(String ident) throws Exception {
+		Integer t = asUnstackType();
+		if(ts.containsKey(ident)) {
+			throw new Exception("Variável \"" + ident + "\" já declarada");
+		} else {
+			ts.put(ident, t);
+			System.out.println("ID <" + ident + "," + Sym.terminalNames[t] + "> adicionado a  tabela de símbolos");
+		}
+	}
+	
+	public void asStackUpType(Integer varType) {
+		pTipos.addFirst(varType);
+		System.out.println("Tipo empilhado: " + Sym.terminalNames[varType]);
+	}
+	
+	public Integer asUnstackType() throws Exception {
+		if (pTipos.isEmpty()) {
+			throw new Exception("Pilha vazia");
+		}
+		Integer t = pTipos.removeFirst(); 
+		System.out.println("Tipo desempilhado: " + Sym.terminalNames[t]);
+		return t;
+	}
+	
+	public void asStackUpResultingType_SUM_SUB() throws Exception {
+		Integer aType = asUnstackType();
+		Integer bType = asUnstackType();
+		Integer resultingType;
+		if (aType == bType){
+			resultingType = aType;
+		} else {
+			if ((aType == Sym.Flutuante && bType == Sym.Inteiro) ||
+				(aType == Sym.Inteiro && bType == Sym.Flutuante)) {
+				resultingType = Sym.Flutuante;
+			} else {
+				throw new Exception("Não é possível fazer operações entre palavras e números");
+			}
+		}
+		asStackUpType(resultingType);
+	}
+	
+	public void asCheckCompatibilityATT_CMD(String id) throws Exception {
+		Integer expType = asUnstackType();
+		Integer idType = asUnstackType();
+		if(idType != null && expType != null){
+			if ((idType == Sym.Inteiro && expType == Sym.Flutuante) ||
+				(idType == Sym.Inteiro && expType == Sym.Texto) ||
+				(idType == Sym.Flutuante && expType == Sym.Texto) ||
+				(idType == Sym.Texto && expType == Sym.Inteiro) ||
+				(idType == Sym.Texto && expType == Sym.Flutuante)){
+				String idTypename = Sym.terminalNames[idType];
+				String expTypename = Sym.terminalNames[expType]; 
+				throw new Exception("A variável '" + id + "' do tipo " +
+					 idTypename + " não pode armazenar valores do tipo "
+					 + expTypename);
+			}
+		}	
+	}
+	
+:};
+
+terminal ID ,Inteiro, Flutuante, Texto;
+terminal Open_Par, Close_Par, NUMBER, INTEIRO_NUM, FLUTUANTE_NUM, CADEIA_CARACTERES; 
+terminal END, Open_Key, Close_Key, Open_C, Close_C;
+terminal SOMA_OP, SUBTRACAO_OP, MULTIPLICACAO_OP, DIVISAO_OP, POTENCIACAO_OP, MAIOR, MENOR, IGUAL;
+terminal Aceito, Negado, Repeticao, ATT;
+
+non terminal program, statements, statement;
+non terminal function, function_Aceito, function_Nao_Aceita, function_Repeticao;
+non terminal variable, decl_variable, decl_attribute_variable, attribute_variable;
+non terminal params_type, data_types;
+non terminal exp, op, exp2, op2, comp, comp2;
+
+
+
+start with program;
+
+program ::= statements END;
+statements ::= statements statement | statement;
+statement ::= variable END | function;
+function ::= function_Aceito | function_Nao_Aceita | function_Repeticao;
+function_Aceito ::= Aceito Open_Par comp Close_Par Open_Key  statements Close_Key;
+function_Nao_Aceita ::= Aceito Open_Par comp Close_Par Open_Key statements Close_Key Negado Open_Key statements Close_Key;
+function_Repeticao ::= Repeticao Open_Par comp Close_Par Open_Key statements Close_Key;
+
+variable ::= decl_variable | decl_attribute_variable | attribute_variable;
+
+decl_variable ::= data_types ID: ident
+				{:
+					asVarCheck((String)ident);
+				:}
+				;
+				
+attribute_variable ::=  ID: ident
+				{:
+					asStackUpType(ts.get(ident));
+				:}
+				ATT exp
+				{:
+					asCheckCompatibilityATT_CMD((String)ident);
+				:}
+				;
+				
+decl_attribute_variable ::= data_types ID: ident
+				{:
+					asVarCheck((String)ident);
+					asStackUpType(ts.get(ident));
+				:}
+				ATT exp
+				{:
+					asCheckCompatibilityATT_CMD((String)ident);
+				:}
+				;
+				 
+data_types ::= Inteiro
+				{:
+					asStackUpType(Sym.Inteiro);
+				:} 
+				| Flutuante
+				{:
+					asStackUpType(Sym.Flutuante);
+				:}
+				| Texto
+				{:
+					asStackUpType(Sym.Texto);
+				:}
+				;
+				
+params_type ::= INTEIRO_NUM
+				{:
+					asStackUpType(Sym.Inteiro);
+				:}
+				| FLUTUANTE_NUM
+				{:
+					asStackUpType(Sym.Flutuante);
+				:}
+				| CADEIA_CARACTERES
+				{:
+					asStackUpType(Sym.Texto);
+				:}
+				| ID:ident
+				{:
+					asStackUpType(ts.get(ident));
+				:}
+				| Open_C exp2 Close_C;
+
+
+
+comp ::= exp2 comp2;
+comp2 ::= IGUAL exp2 | MAIOR exp2 | MENOR exp2;
+
+exp ::= exp2;
+exp2 ::= params_type op;
+
+op ::= op2 params_type
+				{:
+					asStackUpResultingType_SUM_SUB();
+				:}
+				op | ;
+op2 ::= SOMA_OP | SUBTRACAO_OP | MULTIPLICACAO_OP | DIVISAO_OP | POTENCIACAO_OP ;
+
