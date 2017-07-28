@@ -12,10 +12,10 @@ action code {:
 	public void asVarCheck(String ident) throws Exception {
 		Integer t = asUnstackType();
 		if(ts.containsKey(ident)) {
-			throw new Exception("Vari�vel \"" + ident + "\" j� declarada");
+			throw new Exception("Variável \"" + ident + "\" já declarada");
 		} else {
 			ts.put(ident, t);
-			System.out.println("ID <" + ident + "," + Sym.terminalNames[t] + "> adicionado a� tabela de s�mbolos");
+			System.out.println("ID <" + ident + "," + Sym.terminalNames[t] + "> adicionado a tabela de símbolos");
 		}
 	}
 	
@@ -44,10 +44,18 @@ action code {:
 				(aType == Sym.Inteiro && bType == Sym.Flutuante)) {
 				resultingType = Sym.Flutuante;
 			} else {
-				throw new Exception("N�o � poss�vel fazer opera��es entre palavras e n�meros");
+				throw new Exception("Não é possível fazer operações entre palavras e números");
 			}
 		}
 		asStackUpType(resultingType);
+	}
+	
+	public void testeComp(Integer aType, Integer bType) throws Exception {
+		if (aType != bType) {
+			throw new Exception("Tipos incompatíveis!");		
+		} else {
+			System.out.println("Tipos compatíveis");
+		}
 	}
 	
 	public void asCheckCompatibilityATT_CMD(String id) throws Exception {
@@ -61,14 +69,16 @@ action code {:
 				(idType == Sym.Texto && expType == Sym.Flutuante)){
 				String idTypename = Sym.terminalNames[idType];
 				String expTypename = Sym.terminalNames[expType]; 
-				throw new Exception("A vari�vel '" + id + "' do tipo " +
-					 idTypename + " n�o pode armazenar valores do tipo "
+				throw new Exception("A variável '" + id + "' do tipo " +
+					 idTypename + " não pode armazenar valores do tipo "
 					 + expTypename);
 			}
 		}	
 	}
 	
 :};
+
+
 
 terminal ID ,Inteiro, Flutuante, Texto;
 terminal Open_Par, Close_Par, NUMBER, INTEIRO_NUM, FLUTUANTE_NUM, CADEIA_CARACTERES; 
@@ -81,8 +91,6 @@ non terminal function, function_Aceito, function_Nao_Aceita, function_Repeticao;
 non terminal variable, decl_variable, decl_attribute_variable, attribute_variable;
 non terminal params_type, data_types;
 non terminal exp, op, exp2, op2, comp, comp2;
-
-
 
 start with program;
 
@@ -104,6 +112,7 @@ decl_variable ::= data_types ID: ident
 				
 attribute_variable ::=  ID: ident
 				{:
+					asVarCheck((String)ident);
 					asStackUpType(ts.get(ident));
 				:}
 				ATT exp
@@ -157,16 +166,39 @@ params_type ::= INTEIRO_NUM
 
 
 
-comp ::= exp2 comp2;
-comp2 ::= IGUAL exp2 | MAIOR exp2 | MENOR exp2;
+comp ::= exp2:aceito1 comp2 exp2:aceito2
+				{:
+					testeComp(ts.get(aceito1), ts.get(aceito2));
+				:}
+;
+comp2 ::= IGUAL | MAIOR | MENOR;
 
 exp ::= exp2;
 exp2 ::= params_type op;
 
-op ::= op2 params_type
-				{:
-					asStackUpResultingType_SUM_SUB();
-				:}
-				op | ;
-op2 ::= SOMA_OP | SUBTRACAO_OP | MULTIPLICACAO_OP | DIVISAO_OP | POTENCIACAO_OP ;
+op ::= op2 params_type op
+		{:
+			asStackUpResultingType_SUM_SUB();
+		:} | ;
+op2 ::= SOMA_OP
+		{:
+			System.out.println("Operação de soma");
+		:}
+		| SUBTRACAO_OP
+		{:
+			System.out.println("Operação de subtração");
+		:}		 
+		| MULTIPLICACAO_OP 
+		{:
+			System.out.println("Operação de multiplicação");
+		:}		
+		| DIVISAO_OP 
+		{:
+			System.out.println("Operação de divisão");
+		:}		
+		| POTENCIACAO_OP
+		{:
+			System.out.println("Operação de potenciação");
+		:}
+		;
 

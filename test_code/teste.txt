@@ -1,4 +1,10 @@
-Inteiro var:
-Inteiro teste:
-Flutuante ab:
+Texto a = "teste":
+Inteiro b:
+Inteiro d:
+Inteiro c = 3:
+
+Aceito (a < c) {
+	Texto t = "adriano A":
+}
+
 :

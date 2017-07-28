@@ -18,7 +18,7 @@ ESPACO = [ \t]
 NUMERO = [0-9]
 INTEIRO_NUM = {NUMERO}+
 FLUTUANTE_NUM = {NUMERO}+[.]{NUMERO}+
-CADEIA_CARACTERES = [\"][A-Za-z0-9]+[\"]
+CADEIA_CARACTERES = [\"][A-Za-z0-9 ]+[\"]
 QUEBRA_LINHA = [\r]?[\n]
 ID = [A-Za-z_][A-Za-z0-9_]*
 %%
