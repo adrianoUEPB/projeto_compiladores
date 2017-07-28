@@ -1,6 +1,5 @@
-Texto a = "teste":
-Inteiro b:
-Inteiro d:
+Inteiro a = 2:
+
 Inteiro c = 3:
 
 Aceito (a < c) {

@@ -51,10 +51,11 @@ action code {:
 	}
 	
 	public void testeComp(Integer aType, Integer bType) throws Exception {
-		if (aType != bType) {
-			throw new Exception("Tipos incompatíveis!");		
+
+		if (ts.containsKey(aType) && ts.containsKey(bType)) {
+			System.out.println("Válido");
 		} else {
-			System.out.println("Tipos compatíveis");
+			System.out.println("Variáveis não declaradas!");
 		}
 	}
 	
@@ -176,10 +177,10 @@ comp2 ::= IGUAL | MAIOR | MENOR;
 exp ::= exp2;
 exp2 ::= params_type op;
 
-op ::= op2 params_type op
+op ::= op2 params_type
 		{:
 			asStackUpResultingType_SUM_SUB();
-		:} | ;
+		:} op | ;
 op2 ::= SOMA_OP
 		{:
 			System.out.println("Operação de soma");
